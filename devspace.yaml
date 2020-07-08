@@ -1,0 +1,43 @@
+version: v1beta9
+images:
+  app:
+    image: 192.168.39.44:5000/devspace
+    preferSyncOverRebuild: true
+    injectRestartHelper: false
+    cmd: ["npm", "run", "dev"]
+    build:
+      docker:
+        skipPush: true
+deployments:
+- name: web-app
+  helm:
+    componentChart: true
+    values:
+      containers:
+      - image: 192.168.39.44:5000/devspace
+        env:
+          - name: DEBUG
+            value: "web-app:*"
+      service:
+        ports:
+        - port: 4000
+dev:
+  ports:
+  - imageName: app
+    forward:
+    - port: 4000
+  open:
+  - url: http://localhost:4000
+  sync:
+  - imageName: app
+    excludePaths:
+    - .git/
+    uploadExcludePaths:
+    - devspace.yaml
+    onUpload:
+      restartContainer: true
+profiles:
+- name: production
+  patches:
+  - op: remove
+    path: images.app.injectRestartHelper
